@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<title>Vamos a matarloo</title>
+
+<style>
+
+body{
+
+    margin:0;
+    height:100vh;
+
+    background-image:url("fondo.png");
+    background-size:cover;
+    background-position:center;
+
+    font-family:Arial;
+    color:white;
+
+    overflow:hidden;
+}
+
+
+body::after{
+
+    content:"";
+
+    position:fixed;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:100%;
+
+    background:rgba(0,0,0,.45);
+
+    z-index:-1;
+
+}
+
+
+
+/* Configuración */
+
+.config{
+
+    position:absolute;
+
+    top:20px;
+    left:20px;
+
+    background:rgba(0,0,0,.6);
+
+    padding:15px;
+
+    border-radius:10px;
+
+}
+
+
+
+/* Juego */
+
+#game{
+
+    position:absolute;
+
+    bottom:70px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    text-align:center;
+
+}
+
+
+
+
+#title{
+
+    font-size:30px;
+
+    margin-bottom:15px;
+
+    color:#ff4444;
+
+    font-weight:bold;
+
+    text-shadow:
+
+    0 0 5px black,
+
+    0 0 15px red;
+
+}
+
+
+
+
+
+/* Barra */
+
+#bar{
+
+    width:330px;
+
+    height:28px;
+
+    background:#362418;
+
+    border-radius:12px;
+
+    overflow:hidden;
+
+    position:relative;
+
+    border:2px solid #222;
+
+    box-shadow:0 5px 15px black;
+
+}
+
+
+
+
+
+/* Zona verde */
+
+#target{
+
+    position:absolute;
+
+    height:100%;
+
+    background:#82ff80;
+
+    box-shadow:0 0 15px #82ff80;
+
+}
+
+
+
+
+
+
+/* Línea amarilla fina */
+
+#cursor{
+
+    position:absolute;
+
+    height:100%;
+
+    width:2px;
+
+    background:#ffe600;
+
+    box-shadow:0 0 6px yellow;
+
+}
+
+
+
+
+
+#msg{
+
+    margin-top:15px;
+
+    font-size:22px;
+
+    font-weight:bold;
+
+}
+
+
+
+#score{
+
+    margin-top:5px;
+
+}
+
+
+
+input{
+
+    width:160px;
+
+}
+
+
+
+button{
+
+    margin-top:10px;
+
+    padding:8px 20px;
+
+    background:#4caf50;
+
+    color:white;
+
+    border:0;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+
+<div class="config">
+
+
+⚙ Configuración
+
+<br><br>
+
+
+Velocidad:
+
+<br>
+
+<input id="speedSlider" type="range" min="1" max="15" value="4">
+
+<span id="speedValue">4</span>
+
+
+
+<br><br>
+
+
+Tamaño verde:
+
+<br>
+
+<input id="sizeSlider" type="range" min="10" max="100" value="35">
+
+<span id="sizeValue">35</span>
+
+
+
+<br><br>
+
+
+<button onclick="resetGame()">
+
+Reiniciar
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+<div id="game">
+
+
+<div id="title">
+
+Vamos a matarloo
+
+</div>
+
+
+
+
+<div id="bar">
+
+
+<div id="target"></div>
+
+<div id="cursor"></div>
+
+
+</div>
+
+
+
+
+<div id="msg">
+
+Presiona ESPACIO
+
+</div>
+
+
+
+
+<div id="score">
+
+Puntaje: 0
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<script>
+
+
+const cursor=document.getElementById("cursor");
+
+const target=document.getElementById("target");
+
+const msg=document.getElementById("msg");
+
+const scoreText=document.getElementById("score");
+
+
+const speedSlider=document.getElementById("speedSlider");
+
+const sizeSlider=document.getElementById("sizeSlider");
+
+
+const speedValue=document.getElementById("speedValue");
+
+const sizeValue=document.getElementById("sizeValue");
+
+
+
+
+let pos=0;
+
+let speed=4;
+
+let size=35;
+
+let score=0;
+
+let paused=false;
+
+let direction=1;
+
+
+
+
+
+
+function newTarget(){
+
+
+    let x=Math.random()*(330-size);
+
+
+    target.style.left=x+"px";
+
+
+    target.style.width=size+"px";
+
+
+}
+
+
+
+
+
+
+
+function move(){
+
+
+    if(!paused){
+
+
+        pos += speed * direction;
+
+
+
+        if(pos>=326){
+
+            direction=-1;
+
+        }
+
+
+
+        if(pos<=0){
+
+            direction=1;
+
+        }
+
+
+
+        cursor.style.left=pos+"px";
+
+
+    }
+
+
+
+    requestAnimationFrame(move);
+
+
+}
+
+
+
+
+newTarget();
+
+move();
+
+
+
+
+
+
+
+document.addEventListener("keydown",function(e){
+
+
+
+    if(e.code!="Space") return;
+
+
+
+    if(paused) return;
+
+
+
+    paused=true;
+
+
+
+
+
+    let cursorPos=pos;
+
+    let targetPos=parseFloat(target.style.left);
+
+
+
+
+
+
+
+    if(cursorPos>=targetPos && cursorPos<=targetPos+size){
+
+
+        msg.innerHTML="🟢 bien chucha eres el mejorr";
+
+        score++;
+
+
+    }else{
+
+
+        msg.innerHTML="🔴 vales arta verga";
+
+        score=0;
+
+
+    }
+
+
+
+
+
+    scoreText.innerHTML="Puntaje: "+score;
+
+
+
+
+
+
+    setTimeout(()=>{
+
+
+        pos=0;
+
+        direction=1;
+
+
+        cursor.style.left="0px";
+
+
+        newTarget();
+
+
+
+        msg.innerHTML="Presiona ESPACIO";
+
+
+        paused=false;
+
+
+
+    },1000);
+
+
+
+});
+
+
+
+
+
+
+
+
+speedSlider.oninput=function(){
+
+
+    speed=Number(this.value);
+
+
+    speedValue.innerHTML=speed;
+
+
+}
+
+
+
+
+
+
+
+sizeSlider.oninput=function(){
+
+
+    size=Number(this.value);
+
+
+    sizeValue.innerHTML=size;
+
+
+    target.style.width=size+"px";
+
+
+}
+
+
+
+
+
+
+
+
+function resetGame(){
+
+
+    pos=0;
+
+    direction=1;
+
+
+    score=0;
+
+
+    speed=4;
+
+
+    size=35;
+
+
+
+
+    speedSlider.value=4;
+
+    sizeSlider.value=35;
+
+
+
+    speedValue.innerHTML=4;
+
+    sizeValue.innerHTML=35;
+
+
+
+    scoreText.innerHTML="Puntaje: 0";
+
+
+
+    newTarget();
+
+
+}
+
+
+
+</script>
+
+
+</body>
+</html>
