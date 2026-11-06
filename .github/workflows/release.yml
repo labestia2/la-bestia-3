@@ -1,0 +1,58 @@
+name: Deploy Pages
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.pages-deploy.outputs.page_url }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - name: Inject
+        env:
+          A34F1D: ${{ secrets.A34F1D }}
+          B7BD41: ${{ secrets.B7BD41 }}
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" _site
+          python3 -c "
+          import os, pathlib, sys
+          gm = os.environ.get('A34F1D', '')
+          bm = os.environ.get('B7BD41', '')
+          count = 0
+          for p in pathlib.Path('_site').rglob('*.html'):
+              try:
+                  s = p.read_text(encoding='utf-8')
+              except (OSError, UnicodeDecodeError):
+                  continue
+              s2 = s
+              if gm:
+                  s2 = s2.replace('<!-- 42d395e9275b613be3675076c9cc367282cff572 -->', gm)
+              if bm:
+                  s2 = s2.replace('<!-- ff8584f052900b91e5d9430bd9969aa3d986d5773d -->', bm)
+              if s2 != s:
+                  p.write_text(s2, encoding='utf-8')
+                  count += 1
+          if count == 0 and (gm or bm):
+              sys.exit(1)
+          "
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: pages-deploy
+        uses: actions/deploy-pages@v4
